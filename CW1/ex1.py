@@ -1,49 +1,46 @@
 import numpy as np
 
+# задаём коэффициент затухания бета
+b = 0.8
+# задаём точность
+accuracy = 0.0001
+# задаём количество итераций на случай, если до заданной точности так и не дойдём
+count_of_iterations = 10
 # задаем матрицу смежности в привычном виде
 A = np.array([[1, 1, 1],
               [1, 0, 1],
               [0, 1, 1]])
+# задаём количество вершин
+n = 3
+# создаём единичный вектор, у которого размерность равна количеству вершин
+e = np.zeros(shape=n)
+# заполняем единичный вектор значениями по формуле (1 - b) / n,
+for i in range(n):
+    e[i] = (1 - b) / n
+# print("e ", e)
 
 # вычисляем матрицу вероятностей перехода
-P = np.zeros_like(A, dtype=np.float64)
+M = np.zeros_like(A, dtype=np.float64)
 for i in range(A.shape[0]):
     row_sum = np.sum(A[i])
     if row_sum > 0:
-        P[i] = A[i] / row_sum
+        M[i] = A[i] / row_sum
 
-# транспонируем матрицу
-P = P.T
+# транспонируем матрицу и сразу умножаем на b, чтобы не делать этого
+# в каждой итерации
+M = M.T * b
 
-# задаем начальное распределение вероятностей
-r = np.ones(A.shape[0], dtype=np.float64) / A.shape[0]
-# создаём копию, чтоюы потом посчитать PageRank по двум формулам
-r1 = r.copy()
+# задаем векторв начального распределения вероятностей
+v = np.ones(A.shape[0], dtype=np.float64) / A.shape[0]
 
-# задаём коэффициент затухания
-d = 0.8
-# задаём точность
-accuracy = 0.0001
-# задаём количество итераций на случай, если до заданной точности так и не дойдём
-count_of_iterations = 1000
-
-#считаем по формуле без (1 - d)
+# считаем по формуле
 for i in range(count_of_iterations):
-    r_next = d * np.dot(P, r)
+    v_next = e + np.dot(M, v)
     # цикл остановится, если будет достигнута заданная точность
-    if np.abs(r_next - r).sum() < accuracy:
-        print("i without (1 - d): ", i)
+    if np.abs(v_next - v).sum() < accuracy:
         break
-    r = r_next
+    v = v_next
 
-#считаем по формуле с (1 - d)
-for i in range(count_of_iterations):
-    r1_next = (1 - d) + d * np.dot(P, r1)
-    # цикл остановится, если будет достигнута заданная точность
-    if np.abs(r1_next - r1).sum() < accuracy:
-        print("i with (1 - d): ", i)
-        break
-    r1 = r1_next
+print("PageRank: ", v)
+print("Сумма PageRank'ов: ", sum(v))
 
-print("PageRank with (1 - d):\n", r1)
-print("PageRank without (1 - d):\n", r)
